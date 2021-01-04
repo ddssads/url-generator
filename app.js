@@ -41,7 +41,7 @@ app.post('/results', (req, res) => {
       }
     }
     console.log('網址不存在...')
-    let newURL = generatorUrl
+    let newURL = generatorUrl()
     console.log('準備創建短網址：', newURL)
     //檢查短網址是否已經存在資料庫，是的話再重新生成一個短網址 再檢查一次，沒有重複則存入資料庫
     console.log('正在檢查是否重複...')
@@ -50,7 +50,7 @@ app.post('/results', (req, res) => {
         console.log(err)
       } else {
         while (doc) {
-          newURL = generatorUrl
+          newURL = generatorUrl()
         }
         console.log('檢查完成 正在創建短網址...')
         Url.create({

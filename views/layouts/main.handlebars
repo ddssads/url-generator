@@ -15,6 +15,18 @@
   </nav>
   {{{body}}}
 
+
+  <script>
+    function CopyTextToClipboard(id) {
+      const TextRange = document.createRange();
+      TextRange.selectNode(document.getElementById(id));
+      sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(TextRange);
+      document.execCommand("copy");
+      alert("複製完成！")
+    }
+  </script>
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
     integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
     crossorigin="anonymous"></script>

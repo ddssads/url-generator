@@ -1,4 +1,7 @@
 <div class="container mt-5 justify-content-center">
   <h3>請使用下列網址</h3>
-  <p class="text-danger">{{shortURL }}</p>
+  <div>
+    <div class="text-danger" id="copy">{{shortURL}}</div>
+  </div>
+  <button onclick="CopyTextToClipboard('copy')" class="mt-2"> Copy </button>
 </div>
