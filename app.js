@@ -1,26 +1,17 @@
 const express = require('express')
 const exphbs = require('express-handlebars')
 const bodyParser = require('body-parser')
-const mongoose = require('mongoose')
 const Url = require('./models/url')
 const generatorUrl = require('./generator')
+require('./config/mongoose')
 
 const app = express()
-const PORT = 3000
+const PORT = process.env.PORT || 3000
+const BASE_URL = 'https://infinite-bayou-76959.herokuapp.com'
 
 app.engine('handlebars', exphbs({ defaultLayout: 'main' }))
 app.set('view engine', 'handlebars')
 
-mongoose.connect('mongodb://localhost/url', { useNewUrlParser: true, useUnifiedTopology: true })
-const db = mongoose.connection
-
-db.on('error', () => {
-  console.log('mongodb error!')
-})
-
-db.once('open', () => {
-  console.log('mongodb connected!')
-})
 
 app.use(bodyParser.urlencoded({ extended: true }))
 
@@ -38,7 +29,7 @@ app.post('/', (req, res) => {
         Url.find({ targetURL: url })
           .lean()
           .then(url => {
-            let shortURL = `localhost:${PORT}/${url[0].shortURL}`
+            let shortURL = `${BASE_URL}/${url[0].shortURL}`
             res.render('index', { shortURL })
           })
           .catch(error => console.log(error))
@@ -49,15 +40,17 @@ app.post('/', (req, res) => {
           if (err) {
             console.log(err)
           } else {
+            //如果短網址存在資料庫，重新生成一個
             if (doc) {
               newURL = generatorUrl
+              //沒有的話 將這個短網址存入資料庫
             } else {
               Url.create({
                 targetURL: url,
                 shortURL: newURL
               })
                 .then(() => {
-                  let shortURL = `localhost:${PORT}/${newURL}`
+                  let shortURL = `${BASE_URL}/${newURL}`
                   res.render('index', { shortURL })
                 })
                 .catch(error => console.log(error))
