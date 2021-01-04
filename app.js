@@ -3,6 +3,7 @@ const exphbs = require('express-handlebars')
 const bodyParser = require('body-parser')
 const Url = require('./models/url')
 const generatorUrl = require('./generator')
+const { readyState } = require('./config/mongoose')
 require('./config/mongoose')
 
 const app = express()
@@ -19,48 +20,54 @@ app.get('/', (req, res) => {
   res.render('index')
 })
 
-app.post('/', (req, res) => {
-  const url = req.body.URL
-  Url.exists({ targetURL: url }, function (err, doc) {
+app.post('/results', (req, res) => {
+  const inputUrl = req.body.URL
+  //檢查輸入的網址是否存在資料庫，有的話直接找出對應的短網址，沒有則創建一個新的
+  Url.exists({ targetURL: inputUrl }, function (err, doc) {
     if (err) {
       console.log(err)
     } else {
       if (doc) {
-        Url.find({ targetURL: url })
+        console.log('網址已存在，正在導入頁面..')
+        return Url.find({ targetURL: inputUrl })
           .lean()
-          .then(url => {
-            let shortURL = `${BASE_URL}/${url[0].shortURL}`
-            res.render('index', { shortURL })
+          .then(urls => {
+            const result = urls.find(url => url.targetURL === inputUrl)
+            console.log('result', result)
+            let shortURL = `${BASE_URL}/${result.shortURL}`
+            res.render('result', { shortURL })
           })
           .catch(error => console.log(error))
-      } else {
-        //create new URL in DataBase
-        let newURL = generatorUrl
-        Url.exists({ shortURL: newURL }, function (err, doc) {
-          if (err) {
-            console.log(err)
-          } else {
-            //如果短網址存在資料庫，重新生成一個
-            if (doc) {
-              newURL = generatorUrl
-              //沒有的話 將這個短網址存入資料庫
-            } else {
-              Url.create({
-                targetURL: url,
-                shortURL: newURL
-              })
-                .then(() => {
-                  let shortURL = `${BASE_URL}/${newURL}`
-                  res.render('index', { shortURL })
-                })
-                .catch(error => console.log(error))
-            }
-          }
-        })
       }
     }
+    console.log('網址不存在...')
+    let newURL = generatorUrl
+    console.log('準備創建短網址：', newURL)
+    //檢查短網址是否已經存在資料庫，是的話再重新生成一個短網址 再檢查一次，沒有重複則存入資料庫
+    console.log('正在檢查是否重複...')
+    Url.exists({ shortURL: newURL }, function (err, doc) {
+      if (err) {
+        console.log(err)
+      } else {
+        while (doc) {
+          newURL = generatorUrl
+        }
+        console.log('檢查完成 正在創建短網址...')
+        Url.create({
+          targetURL: inputUrl,
+          shortURL: newURL
+        })
+          .then(() => {
+            let shortURL = `${BASE_URL}/${newURL}`
+            console.log('創建完畢 正在導入頁面')
+            res.render('result', { shortURL })
+          })
+          .catch(error => console.log(error))
+      }
+    })
   })
 })
+
 
 app.get('/:shortURL', (req, res) => {
   shortURL = req.params.shortURL
