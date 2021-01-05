@@ -55,9 +55,16 @@ app.post('/results', (req, res) => {
         }
       })
       .then(() => {
-        let shortURL = `${BASE_URL}/${newURL}`
-        console.log('創建完畢 正在導入頁面')
-        res.render('result', { shortURL })
+        Url.create({
+          targetURL: inputUrl,
+          shortURL: newURL
+        })
+          .then(() => {
+            let shortURL = `${BASE_URL}/${newURL}`
+            console.log('創建完畢 正在導入頁面')
+            res.render('result', { shortURL })
+          })
+          .catch(error => console.log(error))
       })
       .catch(error => console.log(error))
   })
