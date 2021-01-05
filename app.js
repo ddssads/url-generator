@@ -43,38 +43,42 @@ app.post('/results', (req, res) => {
     console.log('網址不存在...')
     let newURL = generatorUrl()
     console.log('準備創建短網址：', newURL)
-    //檢查短網址是否已經存在資料庫，是的話再重新生成一個短網址 再檢查一次，沒有重複則存入資料庫
+    //檢查短網址是否已經存在資料庫，是的話再重新生成一個短網址 再檢查一次，直到沒有重複為止則存入資料庫
     console.log('正在檢查是否重複...')
-    Url.exists({ shortURL: newURL }, function (err, doc) {
-      if (err) {
-        console.log(err)
-      } else {
-        while (doc) {
+    return Url.find()
+      .lean()
+      .then(urls => {
+        let isShortUrlExit = urls.find(url => url.shortURL === newURL)
+        while (isShortUrlExit) {
           newURL = generatorUrl()
+          isShortUrlExit = urls.find(url => url.shortURL === newURL)
         }
-        console.log('檢查完成 正在創建短網址...')
-        Url.create({
-          targetURL: inputUrl,
-          shortURL: newURL
-        })
-          .then(() => {
-            let shortURL = `${BASE_URL}/${newURL}`
-            console.log('創建完畢 正在導入頁面')
-            res.render('result', { shortURL })
-          })
-          .catch(error => console.log(error))
-      }
-    })
+      })
+      .then(() => {
+        let shortURL = `${BASE_URL}/${newURL}`
+        console.log('創建完畢 正在導入頁面')
+        res.render('result', { shortURL })
+      })
+      .catch(error => console.log(error))
   })
 })
 
 
 app.get('/:shortURL', (req, res) => {
   shortURL = req.params.shortURL
-  console.log(shortURL)
-  Url.findOne({ shortURL: shortURL })
-    .then(url => res.redirect(`${url.targetURL}`))
-    .catch(error => console.log(error))
+  Url.exists({ shortURL: shortURL }, function (err, doc) {
+    if (err) {
+      console.log(err)
+    } else {
+      if (doc) {
+        return Url.findOne({ shortURL: shortURL })
+          .then(url => res.redirect(`${url.targetURL}`))
+          .catch(error => console.log(error))
+      } else {
+        res.render('index', { errorMessage: 'Could not found this URL!' })
+      }
+    }
+  })
 })
 
 app.listen(PORT, () => {

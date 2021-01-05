@@ -5,6 +5,7 @@
       <label for="exampleURL">請輸入網址</label>
       <input type="url" class="form-control" id="exampleURL" aria-describedby="emailHelp" name="URL" required>
     </div>
+    <p class="text-danger">{{#if errorMessage}}{{errorMessage}}{{/if}}</p>
     <div class="d-flex flex-column align-items-center">
       <button type="submit" class="btn btn-primary">生成短網址</button>
     </div>
